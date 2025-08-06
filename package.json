@@ -25,7 +25,7 @@
     "react-dom": "^17.0.1",
     "react-hotkeys": "^2.0.0",
     "react-image-crop": "^8.6.6",
-    "react-input-slider": "^6.0.0",
+    "react-input-slider": "^4.0.1",
     "react-linear-gradient-picker": "3.0.1",
     "react-moveable": "0.56.0",
     "react-scripts": "^5.0.1",
