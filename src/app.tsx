@@ -727,16 +727,17 @@ function App() {
                                         width={CanvasWidth * globalScale}
                                         height={CanvasHeight * globalScale}
                                     />
-                                    <canvas id="statCanvas"
+                                    {/* KETCHUP */}
+                                    {/* <canvas id="statCanvas"
                                         ref={statCanvasRef}
                                         width={CanvasWidth * globalScale}
                                         height={CanvasHeight * globalScale}
-                                    />
-                                    <canvas id="setIdCanvas"
+                                    /> */}
+                                    {/* <canvas id="setIdCanvas"
                                         ref={setIdCanvasRef}
                                         width={CanvasWidth * globalScale}
                                         height={CanvasHeight * globalScale}
-                                    />
+                                    /> */}
                                     <canvas id="passwordCanvas"
                                         ref={passwordCanvasRef}
                                         width={CanvasWidth * globalScale}

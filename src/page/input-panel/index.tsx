@@ -1,112 +1,142 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
-    Card,
-    CardOpacity,
-    NameStyle,
-    NameStyleType,
-    FrameInfoMap,
-} from '../../model';
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
-    Affiliation,
-    AppHeader,
-    IconButton,
-    RadioTrain,
-    StandaloneLabel,
-    StyledPopMarkdown,
-} from '../../component';
+  Card,
+  CardOpacity,
+  NameStyle,
+  NameStyleType,
+  FrameInfoMap,
+} from "../../model";
 import {
-    checkMonster,
-} from '../../util';
+  Affiliation,
+  AppHeader,
+  IconButton,
+  RadioTrain,
+  StandaloneLabel,
+  StyledPopMarkdown,
+} from "../../component";
+import { checkMonster } from "../../util";
+import { getFoilButtonList, getFinishList, FormatButtonList } from "./const";
+import { ClearOutlined } from "@ant-design/icons";
+import { CharPicker } from "./char-picker";
+import { NameStylePicker, NameStylePickerRef } from "./name-style-picker";
+import { CheckboxTrain, FrameTrain, FrameTrainRef } from "./input-train";
+import { Explanation } from "src/component/explanation";
 import {
-    getFoilButtonList,
-    getFinishList,
-    FormatButtonList,
-} from './const';
-import { ClearOutlined } from '@ant-design/icons';
-import { CharPicker } from './char-picker';
-import { NameStylePicker, NameStylePickerRef } from './name-style-picker';
-import { CheckboxTrain, FrameTrain, FrameTrainRef } from './input-train';
-import { Explanation } from 'src/component/explanation';
-import { changeCardFormat, useCard, useLanguage, useSetting } from '../../service';
-import { LayoutPicker, OpacityPickerRef } from './layout-picker';
+  changeCardFormat,
+  useCard,
+  useLanguage,
+  useSetting,
+} from "../../service";
+import { LayoutPicker, OpacityPickerRef } from "./layout-picker";
 import {
-    AttributeInputGroup,
-    CardIconInputGroup,
-    EffectInputGroup,
-    EffectInputGroupRef,
-    FooterInputGroup,
-    FooterInputGroupRef,
-    ImageInputGroup,
-    ImageInputGroupRef,
-    NameSetInputGroup,
-    NameSetInputGroupRef,
-    PendulumInputGroup,
-    PendulumInputGroupRef,
-    PostPendulumInputGroup,
-    PostPendulumInputGroupRef,
-} from './input-group';
+  AttributeInputGroup,
+  CardIconInputGroup,
+  EffectInputGroup,
+  EffectInputGroupRef,
+  FooterInputGroup,
+  FooterInputGroupRef,
+  ImageInputGroup,
+  ImageInputGroupRef,
+  NameSetInputGroup,
+  NameSetInputGroupRef,
+  PendulumInputGroup,
+  PendulumInputGroupRef,
+  PostPendulumInputGroup,
+  PostPendulumInputGroupRef,
+} from "./input-group";
+import { TextStylePicker } from "./text-style-picker";
+import { useShallow } from "zustand/react/shallow";
 import {
-    TextStylePicker,
-} from './text-style-picker';
-import { useShallow } from 'zustand/react/shallow';
-import {
-    StyledFormatRadioTrain,
-    StyledInputLabelWithButton,
-    StyledNameSetIdInputContainer,
-} from './input-panel.styled';
-import './input-panel.scss';
+  StyledFormatRadioTrain,
+  StyledInputLabelWithButton,
+  StyledNameSetIdInputContainer,
+} from "./input-panel.styled";
+import "./input-panel.scss";
 
 export type CardInputPanelRef = {
-    forceCardData: (card: Card) => void,
-    isLoading: () => boolean,
+  forceCardData: (card: Card) => void;
+  isLoading: () => boolean;
 };
 export type CardInputPanel = {
-    artworkCanvas: ImageInputGroup['receivingCanvas'],
-    backgroundCanvas: ImageInputGroup['receivingCanvas'],
-} & Pick<ImageInputGroup, 'onCropChange' | 'onTainted' | 'onSourceLoaded'>;
-export const CardInputPanel = forwardRef<CardInputPanelRef, CardInputPanel>(({
-    artworkCanvas,
-    backgroundCanvas,
-    onCropChange,
-    onTainted,
-    onSourceLoaded,
-}: CardInputPanel, forwardedRef) => {
+  artworkCanvas: ImageInputGroup["receivingCanvas"];
+  backgroundCanvas: ImageInputGroup["receivingCanvas"];
+} & Pick<ImageInputGroup, "onCropChange" | "onTainted" | "onSourceLoaded">;
+export const CardInputPanel = forwardRef<CardInputPanelRef, CardInputPanel>(
+  (
+    {
+      artworkCanvas,
+      backgroundCanvas,
+      onCropChange,
+      onTainted,
+      onSourceLoaded,
+    }: CardInputPanel,
+    forwardedRef
+  ) => {
     const language = useLanguage();
     const {
-        format,
-        frame, foil, finish, opacity,
-        nameStyleType, nameStyle,
-        getUpdater,
-        setCard,
-    } = useCard(useShallow(({
-        card: {
+      format,
+      frame,
+      foil,
+      finish,
+      opacity,
+      nameStyleType,
+      nameStyle,
+      getUpdater,
+      setCard,
+    } = useCard(
+      useShallow(
+        ({
+          card: {
             format,
-            frame, foil, finish, opacity,
-            nameStyleType, nameStyle,
+            frame,
+            foil,
+            finish,
+            opacity,
+            nameStyleType,
+            nameStyle,
             isLink,
-        },
-        getUpdater,
-        setCard,
-    }) => ({
-        format,
-        frame, foil, finish, opacity,
-        nameStyleType, nameStyle,
-        isLink,
-        getUpdater,
-        setCard,
-    })));
+          },
+          getUpdater,
+          setCard,
+        }) => ({
+          format,
+          frame,
+          foil,
+          finish,
+          opacity,
+          nameStyleType,
+          nameStyle,
+          isLink,
+          getUpdater,
+          setCard,
+        })
+      )
+    );
     const { setting } = useSetting();
-    const { showCreativeOption, showExtraDecorativeOption, reduceMotionColor } = setting;
+    const { showCreativeOption, showExtraDecorativeOption, reduceMotionColor } =
+      setting;
 
     const stylePickerRef = useRef<NameStylePickerRef>(null);
 
     const isMonster = checkMonster({ frame });
     const [stylePickerResetCount, setStylePickerResetCount] = useState(0);
-    const foilButtonList = useMemo(() => getFoilButtonList({
-        normal: language['input.foil.normal.label'],
-        gold: language['input.foil.gold.label'],
-        platinum: language['input.foil.platinum.label'],
-    }), [language]);
+    const foilButtonList = useMemo(
+      () =>
+        getFoilButtonList({
+          normal: language["input.foil.normal.label"],
+          gold: language["input.foil.gold.label"],
+          platinum: language["input.foil.platinum.label"],
+        }),
+      [language]
+    );
 
     const frameTrainRef = useRef<FrameTrainRef>(null);
     const imageInputGroupRef = useRef<ImageInputGroupRef>(null);
@@ -118,201 +148,280 @@ export const CardInputPanel = forwardRef<CardInputPanelRef, CardInputPanel>(({
     const footerInputGroupRef = useRef<FooterInputGroupRef>(null);
 
     const [pickerTarget, setPickerTarget] = useState<{
-        id: string,
-        setValue: (nextValue: string) => void,
+      id: string;
+      setValue: (nextValue: string) => void;
     }>({
-        id: '',
-        setValue: () => {},
+      id: "",
+      setValue: () => {},
     });
 
     const changeFormat = (formatValue: string | number) => {
-        setCard(currentCard => {
-            const nextFormat = `${formatValue}`;
-            const formatSwappedCard = changeCardFormat(currentCard, nextFormat);
+      setCard((currentCard) => {
+        const nextFormat = `${formatValue}`;
+        const formatSwappedCard = changeCardFormat(currentCard, nextFormat);
 
-            const { name, setId, effect, typeAbility, password, creator, pendulumEffect } = formatSwappedCard;
-            nameSetIdInputGroupRef.current?.setValue({ name, setId });
-            effectInputGroupRef.current?.setValue(effect);
-            pendulumInputGroupRef.current?.setValue({ pendulumEffect });
-            postPendulumInputGroupRef.current?.setValue({ typeAbility });
-            footerInputGroupRef.current?.setValue({ creator, password });
+        const {
+          name,
+          setId,
+          effect,
+          typeAbility,
+          password,
+          creator,
+          pendulumEffect,
+        } = formatSwappedCard;
+        nameSetIdInputGroupRef.current?.setValue({ name, setId });
+        effectInputGroupRef.current?.setValue(effect);
+        pendulumInputGroupRef.current?.setValue({ pendulumEffect });
+        postPendulumInputGroupRef.current?.setValue({ typeAbility });
+        footerInputGroupRef.current?.setValue({ creator, password });
 
-            return formatSwappedCard;
-        });
+        return formatSwappedCard;
+      });
     };
-    const changeFoil = useMemo(() => getUpdater('foil'), [getUpdater]);
-    const onFinishChange = useMemo(() => getUpdater('finish'), [getUpdater]);
-    const changeOpacity = useCallback((opacity: CardOpacity) => setCard(curr => ({ ...curr, opacity })), [setCard]);
-    const changeNameStyle = useCallback((type: NameStyleType, value: Partial<NameStyle>) => {
-        setCard(currentCard => {
-            return {
-                ...currentCard,
-                nameStyleType: type,
-                nameStyle: value,
-            };
+    const changeFoil = useMemo(() => getUpdater("foil"), [getUpdater]);
+    const onFinishChange = useMemo(() => getUpdater("finish"), [getUpdater]);
+    const changeOpacity = useCallback(
+      (opacity: CardOpacity) => setCard((curr) => ({ ...curr, opacity })),
+      [setCard]
+    );
+    const changeNameStyle = useCallback(
+      (type: NameStyleType, value: Partial<NameStyle>) => {
+        setCard((currentCard) => {
+          return {
+            ...currentCard,
+            nameStyleType: type,
+            nameStyle: value,
+          };
         });
-    }, [setCard]);
+      },
+      [setCard]
+    );
 
     const finishList = useMemo(() => getFinishList(language), [language]);
 
     useEffect(() => {
-        stylePickerRef.current?.setValue({ font: nameStyle.font });
+      stylePickerRef.current?.setValue({ font: nameStyle.font });
     }, [nameStyle]);
 
     useEffect(() => {
-        layoutPickerRef.current?.setValue(opacity);
+      layoutPickerRef.current?.setValue(opacity);
     }, [opacity]);
 
     useImperativeHandle(forwardedRef, () => ({
-        isLoading: () => (imageInputGroupRef.current?.isLoading() ?? false)
-            || (layoutPickerRef.current?.isLoading() ?? false),
-        forceCardData: card => {
-            setStylePickerResetCount(cnt => cnt + 1);
-            const {
-                name,
-                art, artCrop, artData, artSource,
-                background, backgroundCrop, backgroundData, backgroundSource,
-                opacity,
-                setId,
-                pendulumEffect,
-                typeAbility,
-                effect,
-                atk, def,
-                creator, password,
-                effectStyle, pendulumStyle,
-            } = card;
+      isLoading: () =>
+        (imageInputGroupRef.current?.isLoading() ?? false) ||
+        (layoutPickerRef.current?.isLoading() ?? false),
+      forceCardData: (card) => {
+        setStylePickerResetCount((cnt) => cnt + 1);
+        const {
+          name,
+          art,
+          artCrop,
+          artData,
+          artSource,
+          background,
+          backgroundCrop,
+          backgroundData,
+          backgroundSource,
+          opacity,
+          setId,
+          pendulumEffect,
+          typeAbility,
+          effect,
+          atk,
+          def,
+          creator,
+          password,
+          effectStyle,
+          pendulumStyle,
+        } = card;
 
-            imageInputGroupRef.current?.setValue({ art, artCrop, artData, artSource });
-            layoutPickerRef.current?.setValue({
-                ...opacity,
-                background, backgroundCrop, backgroundData, backgroundSource,
-            });
-            nameSetIdInputGroupRef.current?.setValue({ name, setId });
-            pendulumInputGroupRef.current?.setValue({ pendulumEffect });
-            effectInputGroupRef.current?.setValue(effect);
-            postPendulumInputGroupRef.current?.setValue({
-                typeAbility,
-                effectMinLine: effectStyle.minLine,
-                pendulumEffectMinLine: pendulumStyle.minLine,
-            });
-            footerInputGroupRef.current?.setValue({ atk, def, creator, password });
-        }
+        imageInputGroupRef.current?.setValue({
+          art,
+          artCrop,
+          artData,
+          artSource,
+        });
+        layoutPickerRef.current?.setValue({
+          ...opacity,
+          background,
+          backgroundCrop,
+          backgroundData,
+          backgroundSource,
+        });
+        nameSetIdInputGroupRef.current?.setValue({ name, setId });
+        pendulumInputGroupRef.current?.setValue({ pendulumEffect });
+        effectInputGroupRef.current?.setValue(effect);
+        postPendulumInputGroupRef.current?.setValue({
+          typeAbility,
+          effectMinLine: effectStyle.minLine,
+          pendulumEffectMinLine: pendulumStyle.minLine,
+        });
+        footerInputGroupRef.current?.setValue({ atk, def, creator, password });
+      },
     }));
 
-    return <div
-        className={['card-info-panel', format === 'ocg' ? 'input-ocg' : 'input-tcg'].join(' ')}
-    >
+    return (
+      <div
+        className={[
+          "card-info-panel",
+          format === "ocg" ? "input-ocg" : "input-tcg",
+        ].join(" ")}
+      >
         <AppHeader />
         <br />
         <Affiliation />
 
         <div className="card-overlay-input">
-            <StyledFormatRadioTrain className="format-radio" value={format} onChange={changeFormat} optionList={FormatButtonList}>
-                <span>{language['input.format.label']}</span>
-            </StyledFormatRadioTrain>
-            <RadioTrain className="foil-radio" value={foil} onChange={changeFoil} optionList={foilButtonList}>
-                <span>{language['input.foil.label']}</span>
-            </RadioTrain>
-            {showExtraDecorativeOption && <CheckboxTrain
-                className="finish-checkbox"
-                value={finish}
-                onChange={onFinishChange}
-                optionList={finishList}
+          <StyledFormatRadioTrain
+            className="format-radio"
+            value={format}
+            onChange={changeFormat}
+            optionList={FormatButtonList}
+          >
+            <span>{language["input.format.label"]}</span>
+          </StyledFormatRadioTrain>
+          <RadioTrain
+            className="foil-radio"
+            value={foil}
+            onChange={changeFoil}
+            optionList={foilButtonList}
+          >
+            <span>{language["input.foil.label"]}</span>
+          </RadioTrain>
+          {showExtraDecorativeOption && (
+            <CheckboxTrain
+              className="finish-checkbox"
+              value={finish}
+              onChange={onFinishChange}
+              optionList={finishList}
             >
-                <StyledInputLabelWithButton className="finish-checkbox-label">
-                    <div className="input-label">{language['input.finish.label']}</div>
-                    <IconButton
-                        onClick={() => onFinishChange([])}
-                        Icon={ClearOutlined}
-                        tooltipProps={{
-                            title: language['input.other-finish.reset.tooltip'],
-                        }}
-                    />
-                </StyledInputLabelWithButton>
-            </CheckboxTrain>}
+              <StyledInputLabelWithButton className="finish-checkbox-label">
+                <div className="input-label">
+                  {language["input.finish.label"]}
+                </div>
+                <IconButton
+                  onClick={() => onFinishChange([])}
+                  Icon={ClearOutlined}
+                  tooltipProps={{
+                    title: language["input.other-finish.reset.tooltip"],
+                  }}
+                />
+              </StyledInputLabelWithButton>
+            </CheckboxTrain>
+          )}
         </div>
 
-        {showCreativeOption && <div className="card-layout-input">
+        {showCreativeOption && (
+          <div className="card-layout-input">
             <label className="standalone-addon ant-input-group-addon">
-                {language['input.layout.label']} <Explanation
-                    content={<StyledPopMarkdown>{language['input.layout.tooltip']}</StyledPopMarkdown>}
-                />
+              {language["input.layout.label"]}{" "}
+              <Explanation
+                content={
+                  <StyledPopMarkdown>
+                    {language["input.layout.tooltip"]}
+                  </StyledPopMarkdown>
+                }
+              />
             </label>
-            <LayoutPicker ref={layoutPickerRef}
-                defaultValue={opacity}
-                receivingCanvas={backgroundCanvas}
-                onChange={changeOpacity}
-                onTainted={onTainted}
-                onCropChange={onCropChange}
-                onSourceLoaded={onSourceLoaded}
+            <LayoutPicker
+              ref={layoutPickerRef}
+              defaultValue={opacity}
+              receivingCanvas={backgroundCanvas}
+              onChange={changeOpacity}
+              onTainted={onTainted}
+              onCropChange={onCropChange}
+              onSourceLoaded={onSourceLoaded}
             />
-        </div>}
+          </div>
+        )}
 
-        <FrameTrain ref={frameTrainRef}
-            onSTFrameChange={typeAbility => postPendulumInputGroupRef.current?.setValue({ typeAbility })}
-            onPasswordChange={password => footerInputGroupRef.current?.setValue({ password })}
-            onStatChange={(atk, def, linkRating) => footerInputGroupRef.current?.setValue({ atk, def, linkRating })}
+        <FrameTrain
+          ref={frameTrainRef}
+          onSTFrameChange={(typeAbility) =>
+            postPendulumInputGroupRef.current?.setValue({ typeAbility })
+          }
+          onPasswordChange={(password) =>
+            footerInputGroupRef.current?.setValue({ password })
+          }
+          onStatChange={(atk, def, linkRating) =>
+            footerInputGroupRef.current?.setValue({ atk, def, linkRating })
+          }
         />
 
         <StyledNameSetIdInputContainer className="name-style-id-input">
-            <NameSetInputGroup ref={nameSetIdInputGroupRef}
-                onTakePicker={setPickerTarget}
-            />
-            <NameStylePicker key={stylePickerResetCount} ref={stylePickerRef}
-                frameInfo={FrameInfoMap[frame as keyof typeof FrameInfoMap]}
-                defaultType={nameStyleType}
-                defaultValue={nameStyle}
-                showExtraDecorativeOption={showExtraDecorativeOption}
-                onChange={changeNameStyle}
-            />
-            <CardIconInputGroup
-                showCreativeOption={showCreativeOption}
-            />
+          <NameSetInputGroup
+            ref={nameSetIdInputGroupRef}
+            onTakePicker={setPickerTarget}
+          />
+          <NameStylePicker
+            key={stylePickerResetCount}
+            ref={stylePickerRef}
+            frameInfo={FrameInfoMap[frame as keyof typeof FrameInfoMap]}
+            defaultType={nameStyleType}
+            defaultValue={nameStyle}
+            showExtraDecorativeOption={showExtraDecorativeOption}
+            onChange={changeNameStyle}
+          />
+          <CardIconInputGroup showCreativeOption={showCreativeOption} />
         </StyledNameSetIdInputContainer>
         <div className="main-info">
-            <div className="main-info-first">
-                <AttributeInputGroup language={language} />
+          <div className="main-info-first">
+            <AttributeInputGroup language={language} />
 
-                <PendulumInputGroup ref={pendulumInputGroupRef}
-                    showCreativeOption={showCreativeOption}
-                    showExtraDecorativeOption={showExtraDecorativeOption}
-                    softMode={reduceMotionColor}
-                    onTakePicker={setPickerTarget}
-                    onFrameChange={frame => frameTrainRef.current?.changeFrame(frame)}
+            <PendulumInputGroup
+              ref={pendulumInputGroupRef}
+              showCreativeOption={showCreativeOption}
+              showExtraDecorativeOption={showExtraDecorativeOption}
+              softMode={reduceMotionColor}
+              onTakePicker={setPickerTarget}
+              onFrameChange={(frame) =>
+                frameTrainRef.current?.changeFrame(frame)
+              }
+            />
+
+            <PostPendulumInputGroup
+              ref={postPendulumInputGroupRef}
+              onTakePicker={setPickerTarget}
+            />
+
+            <div>
+              <div className="card-effect-letter-helper">
+                <StandaloneLabel className="standalone-label">
+                  {language["input.effect.label"]}
+                </StandaloneLabel>
+                {showCreativeOption ? <TextStylePicker /> : <div />}
+                <CharPicker
+                  targetId={pickerTarget.id}
+                  onPick={pickerTarget.setValue}
                 />
-
-                <PostPendulumInputGroup ref={postPendulumInputGroupRef} onTakePicker={setPickerTarget} />
-
-                <div>
-                    <div className="card-effect-letter-helper">
-                        <StandaloneLabel className="standalone-label">
-                            {language['input.effect.label']}
-                        </StandaloneLabel>
-                        {showCreativeOption ? <TextStylePicker /> : <div />}
-                        <CharPicker
-                            targetId={pickerTarget.id}
-                            onPick={pickerTarget.setValue}
-                        />
-                    </div>
-                    <EffectInputGroup ref={effectInputGroupRef} onTakePicker={setPickerTarget} />
-                </div>
-
-                <FooterInputGroup ref={footerInputGroupRef}
-                    isMonster={isMonster}
-                    showCreativeOption={showCreativeOption}
-                    onTakePicker={setPickerTarget}
-                />
+              </div>
+              <EffectInputGroup
+                ref={effectInputGroupRef}
+                onTakePicker={setPickerTarget}
+              />
             </div>
-            <div className="main-info-second">
-                <ImageInputGroup ref={imageInputGroupRef}
-                    receivingCanvas={artworkCanvas}
-                    showCreativeOption={showCreativeOption}
-                    showExtraDecorativeOption={showExtraDecorativeOption}
-                    onSourceLoaded={onSourceLoaded}
-                    onTainted={onTainted}
-                    onCropChange={onCropChange}
-                />
-            </div>
+
+            <FooterInputGroup
+              ref={footerInputGroupRef}
+              isMonster={isMonster}
+              showCreativeOption={showCreativeOption}
+              onTakePicker={setPickerTarget}
+            />
+          </div>
+          <div className="main-info-second">
+            <ImageInputGroup
+              ref={imageInputGroupRef}
+              receivingCanvas={artworkCanvas}
+              showCreativeOption={showCreativeOption}
+              showExtraDecorativeOption={showExtraDecorativeOption}
+              onSourceLoaded={onSourceLoaded}
+              onTainted={onTainted}
+              onCropChange={onCropChange}
+            />
+          </div>
         </div>
-    </div>;
-});
+      </div>
+    );
+  }
+);
